@@ -1,0 +1,105 @@
+{
+  "id": "inbound-router",
+  "name": "Inbound WhatsApp Router",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "path": "whatsapp-inbound"
+      },
+      "id": "webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "input":"={{`Clasifica el siguiente mensaje del cliente en cobranza, soporte o spam y responde en JSON {\"category\":\"\", \"summary\":\"\"}: ${$json.body}`}}"
+      },
+      "id": "openai",
+      "name": "OpenAI Classifier",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "propertyName": "category",
+        "rules": [
+          {
+            "value": "cobranza"
+          },
+          {
+            "value": "soporte"
+          }
+        ]
+      },
+      "id": "router",
+      "name": "Route",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "channel": "#cobranzas",
+        "text": "={{`📲 Nuevo mensaje de ${$json.from}: ${$json.summary}`}}"
+      },
+      "id": "slackCollections",
+      "name": "Slack Cobranza",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "channel": "#soporte",
+        "text": "={{`🛠️ Soporte: ${$json.summary}`}}"
+      },
+      "id": "slackSupport",
+      "name": "Slack Soporte",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "OpenAI Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Classifier": {
+      "main": [
+        [
+          {
+            "node": "Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route": {
+      "main": [
+        [
+          {
+            "node": "Slack Cobranza",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack Soporte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

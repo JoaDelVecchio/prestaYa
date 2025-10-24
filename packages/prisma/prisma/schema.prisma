@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LoanStatus {
+  PENDING
+  REMINDED
+  OVERDUE
+  PAID
+}
+
+enum InstallmentStatus {
+  PENDING
+  PAID
+  OVERDUE
+}
+
+enum Role {
+  owner
+  supervisor
+  caja
+  readonly
+}
+
+model Organisation {
+  id           String             @id @default(uuid())
+  name         String
+  timezone     String             @default("America/Buenos_Aires")
+  users        UserOrganisation[]
+  loans        Loan[]
+  activity     ActivityLog[]
+  receipts     Receipt[]
+  installments Installment[]
+  payments     Payment[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+}
+
+model User {
+  id             String             @id
+  email          String             @unique
+  fullName       String?
+  organisations  UserOrganisation[]
+  activityLogs   ActivityLog[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+}
+
+model UserOrganisation {
+  id              String        @id @default(uuid())
+  userId          String
+  organisationId  String
+  role            Role
+  createdAt       DateTime      @default(now())
+  user            User          @relation(fields: [userId], references: [id])
+  organisation    Organisation  @relation(fields: [organisationId], references: [id])
+
+  @@unique([userId, organisationId])
+}
+
+model Loan {
+  id             String          @id @default(uuid())
+  orgId          String
+  externalId     String?         @unique
+  borrowerName   String
+  borrowerPhone  String?
+  borrowerDni    String?
+  principal      Decimal         @db.Decimal(12, 2)
+  interestRate   Decimal         @db.Decimal(5, 2)
+  status         LoanStatus      @default(PENDING)
+  issuedAt       DateTime        @default(now())
+  maturityDate   DateTime?
+  isStopped      Boolean         @default(false)
+  installments   Installment[]
+  payments       Payment[]
+  receipts       Receipt[]
+  activityLogs   ActivityLog[]
+  organisation   Organisation    @relation(fields: [orgId], references: [id])
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([orgId, status])
+}
+
+model Installment {
+  id             String             @id @default(uuid())
+  loanId         String
+  orgId          String
+  sequence       Int
+  dueDate        DateTime
+  amount         Decimal            @db.Decimal(12, 2)
+  status         InstallmentStatus  @default(PENDING)
+  paidAt         DateTime?
+  payment        Payment?
+  loan           Loan               @relation(fields: [loanId], references: [id])
+  organisation   Organisation       @relation(fields: [orgId], references: [id])
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@unique([loanId, sequence])
+  @@index([orgId, status, dueDate])
+}
+
+model Payment {
+  id             String       @id @default(uuid())
+  loanId         String
+  installmentId  String?     @unique
+  orgId          String
+  amount         Decimal      @db.Decimal(12, 2)
+  paidAt         DateTime     @default(now())
+  method         String?
+  metadata       Json?
+  loan           Loan         @relation(fields: [loanId], references: [id])
+  installment    Installment? @relation(fields: [installmentId], references: [id])
+  organisation   Organisation @relation(fields: [orgId], references: [id])
+  receipt        Receipt?
+
+  @@index([orgId, paidAt])
+}
+
+model ActivityLog {
+  id          String        @id @default(uuid())
+  orgId       String
+  loanId      String?
+  actorId     String?
+  action      String
+  diff        Json
+  dayHash     String
+  createdAt   DateTime      @default(now())
+  organisation Organisation @relation(fields: [orgId], references: [id])
+  loan        Loan?         @relation(fields: [loanId], references: [id])
+  actor       User?         @relation(fields: [actorId], references: [id])
+
+  @@index([orgId, createdAt])
+  @@index([dayHash])
+}
+
+model Receipt {
+  id           String        @id @default(uuid())
+  orgId        String
+  loanId       String
+  paymentId    String?      @unique
+  storagePath  String
+  signedUrl    String?
+  expiresAt    DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  organisation Organisation  @relation(fields: [orgId], references: [id])
+  loan         Loan          @relation(fields: [loanId], references: [id])
+  payment      Payment?      @relation(fields: [paymentId], references: [id])
+
+  @@index([orgId])
+}

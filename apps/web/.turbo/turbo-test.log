@@ -1,0 +1,15 @@
+
+> @prestaya/web@0.1.0 test /Users/joaquindelvecchio/Documents/prestaYa/apps/web
+> playwright install --with-deps && playwright test
+
+[2m[WebServer] [22m  [1m[38;2;173;127;168m▲ Next.js 14.2.7[39m[22m
+[2m[WebServer] [22m  - Local:        http://localhost:3005
+[2m[WebServer] [22m
+[2m[WebServer] [22m [32m[1m✓[22m[39m Starting...
+[2m[WebServer] [22m [32m[1m✓[22m[39m Ready in 495ms
+
+Running 1 test using 1 worker
+
+  ✓  1 tests/app.e2e.spec.ts:13:7 › PrestaYa workflows › login, create loan, charge, arqueo overview (2.4s)
+
+  1 passed (4.6s)

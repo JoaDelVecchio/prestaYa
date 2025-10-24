@@ -1,0 +1,50 @@
+
+> @prestaya/api@0.1.0 test /Users/joaquindelvecchio/Documents/prestaYa/apps/api
+> jest --runInBand --coverage
+
+ts-jest[ts-compiler] (WARN) Got a `.js` file to compile while `allowJs` option is not set to `true` (file: /Users/joaquindelvecchio/Documents/prestaYa/packages/prisma/generated/client/index.js). To fix this:
+  - if you want TypeScript to process JS files, set `allowJs` to `true` in your TypeScript config (usually tsconfig.json)
+  - if you do not want TypeScript to process your `.js` files, in your Jest config change the `transform` key which value is `ts-jest` so that it does not match `.js` files anymore
+(node:97356) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS src/loans/loan.service.spec.ts
+  ● Console
+
+    console.log
+      [32m✔[0m [33mConsole Ninja[0m extension is connected to [33mNest.js[0m, see [36mhttps://tinyurl.com/2vt8jxzw[0m
+
+      at new kO (../../../../../.vscode/extensions/wallabyjs.console-ninja-1.0.486/out/buildHook/index.js:1:4292523)
+
+PASS src/webhooks/webhook.controller.spec.ts
+PASS src/common/guards/supabase-auth.guard.spec.ts
+  ● Console
+
+    console.log
+      [32m✔[0m [33mConsole Ninja[0m extension is connected to [33mNest.js[0m, see [36mhttps://tinyurl.com/2vt8jxzw[0m
+
+      at new kO (../../../../../.vscode/extensions/wallabyjs.console-ninja-1.0.486/out/buildHook/index.js:1:4292523)
+
+-----------------------------|---------|----------|---------|---------|----------------------------
+File                         | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s          
+-----------------------------|---------|----------|---------|---------|----------------------------
+All files                    |   91.66 |    57.69 |   95.83 |   91.12 |                            
+ activity                    |   88.23 |      100 |   66.66 |   86.66 |                            
+  activity.service.ts        |   88.23 |      100 |   66.66 |   86.66 | 40-41                      
+ common                      |    90.9 |        0 |     100 |   88.88 |                            
+  request-context.service.ts |    90.9 |        0 |     100 |   88.88 | 22                         
+ common/guards               |   90.62 |    52.63 |     100 |      90 |                            
+  supabase-auth.guard.ts     |   90.62 |    52.63 |     100 |      90 | 60,69,82                   
+ common/utils                |     100 |      100 |     100 |     100 |                            
+  diff.util.ts               |     100 |      100 |     100 |     100 |                            
+  hash.util.ts               |     100 |      100 |     100 |     100 |                            
+ loans                       |    90.8 |    47.61 |     100 |   90.47 |                            
+  loan.service.ts            |    90.8 |    47.61 |     100 |   90.47 | 26,122,136,150,250,282-285 
+ webhooks                    |   94.44 |    83.33 |     100 |   93.75 |                            
+  webhook.controller.ts      |   94.44 |    83.33 |     100 |   93.75 | 27                         
+-----------------------------|---------|----------|---------|---------|----------------------------
+
+Test Suites: 3 passed, 3 total
+Tests:       13 passed, 13 total
+Snapshots:   0 total
+Time:        6.996 s
+Ran all test suites.

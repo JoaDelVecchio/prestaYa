@@ -1,0 +1,4 @@
+
+> @prestaya/ui@0.1.0 build /Users/joaquindelvecchio/Documents/prestaYa/packages/ui
+> tsc -p tsconfig.build.json
+

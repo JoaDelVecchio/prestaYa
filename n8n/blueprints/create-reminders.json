@@ -1,0 +1,68 @@
+{
+  "id": "create-reminders",
+  "name": "Create Loan Reminders",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": [
+          {
+            "hour": 13,
+            "minute": 0
+          }
+        ]
+      },
+      "id": "cron",
+      "name": "Daily Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "url": "{{ $json.apiUrl }}/loans?status=OVERDUE",
+        "responseFormat": "json",
+        "options": {}
+      },
+      "id": "fetchOverdue",
+      "name": "Fetch Overdue Loans",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "to": "={{$json[\"borrowerPhone\"]}}",
+        "text": "={{`Hola ${$json[\"borrowerName\"]}, recordá tu cuota vencida de $${$json[\"amount\"]}.`}}"
+      },
+      "id": "whatsapp",
+      "name": "WhatsApp Reminder",
+      "type": "n8n-nodes-base.whatsappCloudApi",
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "Daily Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Overdue Loans",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Overdue Loans": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

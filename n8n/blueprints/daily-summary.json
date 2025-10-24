@@ -1,0 +1,66 @@
+{
+  "id": "daily-summary",
+  "name": "Daily Summary",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": [
+          {
+            "hour": 20,
+            "minute": 30
+          }
+        ]
+      },
+      "id": "cron",
+      "name": "Evening Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "url": "{{ $json.apiUrl }}/reports/daily",
+        "responseFormat": "json"
+      },
+      "id": "fetch",
+      "name": "Fetch Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "subject": "Resumen diario de cobranzas",
+        "text": "={{`Hoy cobramos $${$json.totalCollected} con ${$json.payments} pagos confirmados.`}}",
+        "toEmail": "finanzas@prestaya.io"
+      },
+      "id": "email",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.smtp",
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "Evening Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Summary": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@prestaya/prisma",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "prisma generate",
+    "lint": "echo 'No lint for prisma'",
+    "test": "echo 'No tests for prisma'"
+  },
+  "main": "generated/client/index.js",
+  "types": "generated/client/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./generated/client/index.d.ts",
+      "default": "./generated/client/index.js"
+    }
+  },
+  "dependencies": {
+    "@prisma/client": "5.22.0",
+    "prisma": "5.22.0"
+  }
+}

@@ -1,0 +1,13 @@
+
+
+> @prestaya/web@0.1.0 dev /Users/joaquindelvecchio/Documents/prestaYa/apps/web
+> next dev
+
+[32m✔[0m [33mConsole Ninja[0m extension is connected to [33mNext.js[0m, see [36mhttps://tinyurl.com/2vt8jxzw[0m
+  [1m[38;2;173;127;168m▲ Next.js 14.2.7[39m[22m
+  - Local:        http://localhost:3000
+  - Environments: .env
+
+ [32m[1m✓[22m[39m Starting...
+ [32m[1m✓[22m[39m Ready in 3.5s
+[?25h

@@ -1,0 +1,53 @@
+{
+  "id": "error-alert",
+  "name": "Error Alert",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "errorTrigger",
+      "name": "Workflow Error",
+      "type": "n8n-nodes-base.workflowTrigger",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "channel": "#alertas",
+        "text": "={{`⚠️ Error en ${$json.workflow.name}: ${$json.error.message}`}}"
+      },
+      "id": "slack",
+      "name": "Slack Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "subject": "Falla en workflow",
+        "toEmail": "devops@prestaya.io",
+        "text": "={{`Workflow ${$json.workflow.name} falló. Error: ${$json.error.message}`}}"
+      },
+      "id": "email",
+      "name": "Email Escalation",
+      "type": "n8n-nodes-base.smtp",
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "Workflow Error": {
+      "main": [
+        [
+          {
+            "node": "Slack Alert",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Email Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

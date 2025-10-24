@@ -1,0 +1,53 @@
+
+
+> @prestaya/api@0.1.0 dev /Users/joaquindelvecchio/Documents/prestaYa/apps/api
+> ts-node --project tsconfig.json src/main.ts
+
+[32m✔[0m [33mConsole Ninja[0m extension is connected to [33mNest.js[0m, see [36mhttps://tinyurl.com/2vt8jxzw[0m
+[31m(node:9673) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)[39m
+[32m[Nest] 9673  - [39m10/21/2025, 11:02:33 AM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 9673  - [39m10/21/2025, 11:02:33 AM [32m    LOG[39m [38;5;3m[SupabaseStorageService] [39m[32mSupabase storage client initialized[39m
+[32m[Nest] 9673  - [39m10/21/2025, 11:02:34 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPrismaModule dependencies initialized[39m[38;5;3m +246ms[39m
+[32m[Nest] 9673  - [39m10/21/2025, 11:02:34 AM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStorageModule dependencies initialized[39m[38;5;3m +1ms[39m
+[31m[Nest] 9673  - [39m10/21/2025, 11:02:34 AM [31m  ERROR[39m [38;5;3m[ExceptionHandler] [39m[31mNest can't resolve dependencies of the ActivityService (PrismaService, ?). Please make sure that the argument RequestContextService at index [1] is available in the ActivityModule context.
+
+Potential solutions:
+- Is ActivityModule a valid NestJS module?
+- If RequestContextService is a provider, is it part of the current ActivityModule?
+- If RequestContextService is exported from a separate @Module, is that module imported within ActivityModule?
+  @Module({
+    imports: [ /* the Module containing RequestContextService */ ]
+  })
+[39m
+Error: Nest can't resolve dependencies of the ActivityService (PrismaService, ?). Please make sure that the argument RequestContextService at index [1] is available in the ActivityModule context.
+
+Potential solutions:
+- Is ActivityModule a valid NestJS module?
+- If RequestContextService is a provider, is it part of the current ActivityModule?
+- If RequestContextService is exported from a separate @Module, is that module imported within ActivityModule?
+  @Module({
+    imports: [ /* the Module containing RequestContextService */ ]
+  })
+
+    at Injector.lookupComponentInParentModules (/Users/joaquindelvecchio/Documents/prestaYa/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_@nestjs+platform-express@10.4.20_reflect-metadata@0.2.2_rxjs@7.8.2/node_modules/@nestjs/core/injector/injector.js:262:19)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async Injector.resolveComponentInstance (/Users/joaquindelvecchio/Documents/prestaYa/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_@nestjs+platform-express@10.4.20_reflect-metadata@0.2.2_rxjs@7.8.2/node_modules/@nestjs/core/injector/injector.js:215:33)
+    at async resolveParam (/Users/joaquindelvecchio/Documents/prestaYa/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_@nestjs+platform-express@10.4.20_reflect-metadata@0.2.2_rxjs@7.8.2/node_modules/@nestjs/core/injector/injector.js:129:38)
+    at async Promise.all (index 1)
+    at async Injector.resolveConstructorParams (/Users/joaquindelvecchio/Documents/prestaYa/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_@nestjs+platform-express@10.4.20_reflect-metadata@0.2.2_rxjs@7.8.2/node_modules/@nestjs/core/injector/injector.js:144:27)
+    at async Injector.loadInstance (/Users/joaquindelvecchio/Documents/prestaYa/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_@nestjs+platform-express@10.4.20_reflect-metadata@0.2.2_rxjs@7.8.2/node_modules/@nestjs/core/injector/injector.js:70:13)
+    at async Injector.loadProvider (/Users/joaquindelvecchio/Documents/prestaYa/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_@nestjs+platform-express@10.4.20_reflect-metadata@0.2.2_rxjs@7.8.2/node_modules/@nestjs/core/injector/injector.js:98:9)
+    at async /Users/joaquindelvecchio/Documents/prestaYa/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_@nestjs+platform-express@10.4.20_reflect-metadata@0.2.2_rxjs@7.8.2/node_modules/@nestjs/core/injector/instance-loader.js:56:13
+    at async Promise.all (index 3)
+    at async InstanceLoader.createInstancesOfProviders (/Users/joaquindelvecchio/Documents/prestaYa/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_@nestjs+platform-express@10.4.20_reflect-metadata@0.2.2_rxjs@7.8.2/node_modules/@nestjs/core/injector/instance-loader.js:55:9)
+    at async /Users/joaquindelvecchio/Documents/prestaYa/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_@nestjs+platform-express@10.4.20_reflect-metadata@0.2.2_rxjs@7.8.2/node_modules/@nestjs/core/injector/instance-loader.js:40:13
+    at async Promise.all (index 6)
+    at async InstanceLoader.createInstances (/Users/joaquindelvecchio/Documents/prestaYa/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_@nestjs+platform-express@10.4.20_reflect-metadata@0.2.2_rxjs@7.8.2/node_modules/@nestjs/core/injector/instance-loader.js:39:9)
+    at async InstanceLoader.createInstancesOfDependencies (/Users/joaquindelvecchio/Documents/prestaYa/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_@nestjs+platform-express@10.4.20_reflect-metadata@0.2.2_rxjs@7.8.2/node_modules/@nestjs/core/injector/instance-loader.js:22:13)
+    at async /Users/joaquindelvecchio/Documents/prestaYa/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_@nestjs+platform-express@10.4.20_reflect-metadata@0.2.2_rxjs@7.8.2/node_modules/@nestjs/core/nest-factory.js:108:17
+    at async Function.asyncRun (/Users/joaquindelvecchio/Documents/prestaYa/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_@nestjs+platform-express@10.4.20_reflect-metadata@0.2.2_rxjs@7.8.2/node_modules/@nestjs/core/errors/exceptions-zone.js:22:13)
+    at async NestFactoryStatic.initialize (/Users/joaquindelvecchio/Documents/prestaYa/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_@nestjs+platform-express@10.4.20_reflect-metadata@0.2.2_rxjs@7.8.2/node_modules/@nestjs/core/nest-factory.js:106:13)
+    at async NestFactoryStatic.create (/Users/joaquindelvecchio/Documents/prestaYa/node_modules/.pnpm/@nestjs+core@10.4.20_@nestjs+common@10.4.20_@nestjs+platform-express@10.4.20_reflect-metadata@0.2.2_rxjs@7.8.2/node_modules/@nestjs/core/nest-factory.js:42:9)
+    at async bootstrap (/Users/joaquindelvecchio/Documents/prestaYa/apps/api/src/main.ts:6:15)
+[41m[30m ELIFECYCLE [39m[49m [31mCommand failed with exit code 1.[39m

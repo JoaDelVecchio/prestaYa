@@ -1,0 +1,81 @@
+{
+  "id": "payment-received",
+  "name": "Payment Received",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "path": "payment-received",
+        "options": {}
+      },
+      "id": "webhook",
+      "name": "Incoming Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "url": "{{ $json.apiUrl }}/loans/{{$json.loanId}}/charge",
+        "method": "POST",
+        "responseFormat": "json",
+        "jsonParameters": true,
+        "options": {}
+      },
+      "id": "chargeLoan",
+      "name": "Charge Loan API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "to": "={{$json[\"customerPhone\"]}}",
+        "text": "={{`Gracias ${$json[\"customer\"]} por tu pago de $${$json[\"amount\"]}. Recibo: ${$json[\"receiptUrl\"]}`}}"
+      },
+      "id": "whatsapp",
+      "name": "WhatsApp Confirm",
+      "type": "n8n-nodes-base.whatsappCloudApi",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "channel": "#cobranzas",
+        "text": "={{`💰 Pago registrado: ${$json.customer} abonó $${$json.amount}.`}}"
+      },
+      "id": "slack",
+      "name": "Slack Notification",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "Incoming Webhook": {
+      "main": [
+        [
+          {
+            "node": "Charge Loan API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Charge Loan API": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp Confirm",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

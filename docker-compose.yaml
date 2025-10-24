@@ -1,0 +1,66 @@
+version: '3.9'
+services:
+  supabase-db:
+    image: supabase/postgres:15.1.1.61
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: prestaya
+    ports:
+      - '5432:5432'
+    volumes:
+      - supabase-data:/var/lib/postgresql/data
+
+  supabase-rest:
+    image: postgrest/postgrest:v12.2.0
+    environment:
+      PGRST_DB_URI: postgres://postgres:postgres@supabase-db:5432/prestaya
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: anon
+    depends_on:
+      - supabase-db
+    ports:
+      - '3003:3000'
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@supabase-db:5432/prestaya
+      SUPABASE_URL: http://supabase-rest:3000
+      SUPABASE_SERVICE_ROLE_KEY: dev-key
+      SUPABASE_JWT_SECRET: dev-super-secret
+      PORT: 3001
+    depends_on:
+      - supabase-db
+    ports:
+      - '3001:3001'
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:3001/api
+      SUPABASE_JWT_SECRET: dev-super-secret
+    depends_on:
+      - api
+    ports:
+      - '3000:3000'
+
+  n8n:
+    image: n8nio/n8n:1.81.2
+    environment:
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_BASIC_AUTH_ACTIVE: 'true'
+      N8N_BASIC_AUTH_USER: admin
+      N8N_BASIC_AUTH_PASSWORD: admin
+    ports:
+      - '5678:5678'
+    volumes:
+      - n8n-data:/home/node/.n8n
+
+volumes:
+  supabase-data:
+  n8n-data:
