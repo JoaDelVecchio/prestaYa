@@ -1,5 +1,5 @@
-import { Module } from '@nestjs/common';
-import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { LoanModule } from './loans/loan.module';
@@ -7,9 +7,11 @@ import { ActivityModule } from './activity/activity.module';
 import { StorageModule } from './storage/storage.module';
 import { WebhookModule } from './webhooks/webhook.module';
 import { SupabaseAuthGuard } from './common/guards/supabase-auth.guard';
-import { RolesGuard } from './common/guards/roles.guard';
-import { RequestContextInterceptor } from './common/interceptors/context.interceptor';
-import { RequestContextService } from './common/request-context.service';
+import { RequestContextModule } from './common/request-context.module';
+import { MetricsModule } from './metrics/metrics.module';
+import { PaymentModule } from './payments/payment.module';
+import { UserModule } from './users/user.module';
+import { RequestContextMiddleware } from './common/request-context.middleware';
 
 @Module({
   imports: [
@@ -18,13 +20,16 @@ import { RequestContextService } from './common/request-context.service';
     StorageModule,
     ActivityModule,
     LoanModule,
-    WebhookModule
+    WebhookModule,
+    RequestContextModule,
+    MetricsModule,
+    PaymentModule,
+    UserModule,
   ],
-  providers: [
-    RequestContextService,
-    { provide: APP_GUARD, useClass: SupabaseAuthGuard },
-    { provide: APP_GUARD, useClass: RolesGuard },
-    { provide: APP_INTERCEPTOR, useClass: RequestContextInterceptor }
-  ]
+  providers: [{ provide: APP_GUARD, useClass: SupabaseAuthGuard }],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestContextMiddleware).forRoutes('*');
+  }
+}

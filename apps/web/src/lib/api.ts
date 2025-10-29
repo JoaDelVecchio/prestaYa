@@ -1,69 +1,88 @@
-import { mockDb, CreateLoanPayload, ChargePayload } from './mock-db';
-import { CashSummary, Loan, OrgUser, Payment } from './types';
+import type { CashSummary, Loan, OrgUser, Payment } from './types';
+import type { ChargeLoanInput, CreateLoanInput } from './api.types';
 
-const isBrowser = typeof window !== 'undefined';
+const useRealApi = process.env.NEXT_PUBLIC_USE_REAL_API === 'true';
+
+export type { CreateLoanInput, ChargeLoanInput } from './api.types';
+
+async function loadMockModule() {
+  return import('./api.mock');
+}
 
 export async function getLoans(): Promise<Loan[]> {
-  if (isBrowser) {
-    const response = await fetch('/api/mock/loans', { cache: 'no-store' });
-    return response.json();
+  if (!useRealApi) {
+    const { getLoansMock } = await loadMockModule();
+    return getLoansMock();
   }
-  return mockDb.listLoans();
-}
-
-export async function getLoan(id: string): Promise<Loan | undefined> {
-  const loans = await getLoans();
-  return loans.find((loan) => loan.id === id);
-}
-
-export async function createLoan(payload: CreateLoanPayload): Promise<Loan> {
-  if (isBrowser) {
-    const response = await fetch('/api/mock/loans', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    return response.json();
+  if (typeof window === 'undefined') {
+    const { getLoansServer } = await import('./api.server');
+    return getLoansServer();
   }
-  return mockDb.createLoan(payload);
-}
-
-export async function chargeLoan(payload: ChargePayload) {
-  if (isBrowser) {
-    const response = await fetch(`/api/mock/loans/${payload.loanId}/charge`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        installmentId: payload.installmentId,
-        amount: payload.amount,
-        method: payload.method
-      })
-    });
-    return response.json();
-  }
-  return mockDb.charge(payload);
+  const { getLoansClient } = await import('./api.client');
+  return getLoansClient();
 }
 
 export async function getCashSummary(): Promise<CashSummary> {
-  if (isBrowser) {
-    const response = await fetch('/api/mock/summary', { cache: 'no-store' });
-    return response.json();
+  if (!useRealApi) {
+    const { getCashSummaryMock } = await loadMockModule();
+    return getCashSummaryMock();
   }
-  return mockDb.summary();
-}
-
-export async function getUsers(): Promise<OrgUser[]> {
-  if (isBrowser) {
-    const response = await fetch('/api/mock/users', { cache: 'no-store' });
-    return response.json();
+  if (typeof window === 'undefined') {
+    const { getCashSummaryServer } = await import('./api.server');
+    return getCashSummaryServer();
   }
-  return mockDb.listUsers();
+  const { getCashSummaryClient } = await import('./api.client');
+  return getCashSummaryClient();
 }
 
 export async function getPayments(): Promise<Payment[]> {
-  if (isBrowser) {
-    const response = await fetch('/api/mock/payments', { cache: 'no-store' });
-    return response.json();
+  if (!useRealApi) {
+    const { getPaymentsMock } = await loadMockModule();
+    return getPaymentsMock();
   }
-  return mockDb.listPayments();
+  if (typeof window === 'undefined') {
+    const { getPaymentsServer } = await import('./api.server');
+    return getPaymentsServer();
+  }
+  const { getPaymentsClient } = await import('./api.client');
+  return getPaymentsClient();
+}
+
+export async function getUsers(): Promise<OrgUser[]> {
+  if (!useRealApi) {
+    const { getUsersMock } = await loadMockModule();
+    return getUsersMock();
+  }
+  if (typeof window === 'undefined') {
+    const { getUsersServer } = await import('./api.server');
+    return getUsersServer();
+  }
+  const { getUsersClient } = await import('./api.client');
+  return getUsersClient();
+}
+
+export async function createLoan(payload: CreateLoanInput): Promise<Loan> {
+  if (!useRealApi) {
+    const { createLoanMock } = await loadMockModule();
+    return createLoanMock(payload);
+  }
+  if (typeof window === 'undefined') {
+    const { createLoanServer } = await import('./api.server');
+    return createLoanServer(payload);
+  }
+  const { createLoanClient } = await import('./api.client');
+  return createLoanClient(payload);
+}
+
+export async function chargeLoan(payload: ChargeLoanInput) {
+  if (!useRealApi) {
+    const { chargeLoanMock } = await loadMockModule();
+    return chargeLoanMock(payload);
+  }
+  if (typeof window === 'undefined') {
+    const { chargeLoanServer } = await import('./api.server');
+    return chargeLoanServer(payload);
+  }
+  const { chargeLoanClient } = await import('./api.client');
+  return chargeLoanClient(payload);
 }

@@ -30,6 +30,7 @@ export type Payment = {
   installmentId?: string;
   amount: number;
   paidAt: string;
+  method?: string;
 };
 
 export type CashSummary = {

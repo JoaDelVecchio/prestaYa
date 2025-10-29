@@ -27,6 +27,7 @@ pnpm --filter @prestaya/prisma build # genera el cliente Prisma
 Crea archivos `.env` según el contexto:
 
 `apps/api/.env`
+
 ```
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/prestaya
 SUPABASE_URL=http://127.0.0.1:3003
@@ -38,8 +39,9 @@ N8N_WEBHOOK_SECRET=dev-n8n
 ```
 
 `apps/web/.env`
+
 ```
-NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api
+NEXT_PUBLIC_API_URL=http://127.0.0.1:3131/api
 SUPABASE_JWT_SECRET=dev-super-secret
 ```
 
@@ -47,14 +49,14 @@ SUPABASE_JWT_SECRET=dev-super-secret
 
 ## Comandos útiles
 
-| Objetivo | Comando |
-| --- | --- |
-| Dev (api + web) | `pnpm dev` |
-| Lint | `pnpm lint` |
-| Tests backend | `pnpm --filter @prestaya/api test` |
+| Objetivo                    | Comando                            |
+| --------------------------- | ---------------------------------- |
+| Dev (api + web)             | `pnpm dev`                         |
+| Lint                        | `pnpm lint`                        |
+| Tests backend               | `pnpm --filter @prestaya/api test` |
 | Tests frontend (Playwright) | `pnpm --filter @prestaya/web test` |
-| Build general | `pnpm build` |
-| Formateo | `pnpm format:write` |
+| Build general               | `pnpm build`                       |
+| Formateo                    | `pnpm format:write`                |
 
 ## Ejecutar en Docker
 
@@ -63,7 +65,8 @@ docker-compose up --build
 ```
 
 Servicios expuestos:
-- API Nest: http://localhost:3001/api
+
+- API Nest: http://localhost:3131/api
 - Web Next: http://localhost:3000
 - Supabase REST: http://localhost:3003
 - n8n: http://localhost:5678 (usuario/clave `admin`)
@@ -135,4 +138,5 @@ Archivos en `n8n/blueprints/*.json`. Importar via **Import Workflow** en n8n:
 - Conectar `lib/api.ts` del frontend al backend real (reemplazar mockDb).
 - Añadir métricas Prometheus + Grafana.
 - Automatizar recordatorios vía Twilio/WhatsApp Business API en producción.
+
 # prestaYa

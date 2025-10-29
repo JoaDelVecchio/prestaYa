@@ -3,7 +3,7 @@ import clsx from 'clsx';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost';
 
-type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
 };
 
@@ -16,13 +16,17 @@ const variantStyles: Record<ButtonVariant, string> = {
   secondary:
     'bg-white/80 text-body-light shadow-subtle hover:bg-white hover:shadow-hover hover:scale-[1.03] active:scale-[0.99] active:bg-white/90',
   ghost:
-    'bg-transparent text-accent hover:bg-accent/10 hover:shadow-hover hover:scale-[1.03] active:scale-[0.99]'
+    'bg-transparent text-accent hover:bg-accent/10 hover:shadow-hover hover:scale-[1.03] active:scale-[0.99]',
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', ...props }, ref) => (
-    <button ref={ref} className={clsx(baseStyles, variantStyles[variant], className)} {...props} />
-  )
+    <button
+      ref={ref}
+      className={clsx(baseStyles, variantStyles[variant], className)}
+      {...props}
+    />
+  ),
 );
 
 Button.displayName = 'Button';

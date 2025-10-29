@@ -18,5 +18,11 @@
   "dependencies": {
     "@prisma/client": "5.22.0",
     "prisma": "5.22.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }

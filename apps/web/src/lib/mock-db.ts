@@ -1,4 +1,5 @@
 import { CashSummary, Installment, Loan, OrgUser, Payment } from './types';
+import type { ChargeLoanInput, CreateLoanInput } from './api.types';
 
 const globalStore = globalThis as typeof globalThis & { __mockDb?: MockDb };
 
@@ -7,23 +8,6 @@ const today = () => new Date();
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value));
 }
-
-export type CreateLoanPayload = {
-  borrowerName: string;
-  borrowerPhone?: string;
-  borrowerDni: string;
-  principal: number;
-  interestRate: number;
-  numberOfInstallments: number;
-  frequency: 'weekly' | 'biweekly' | 'monthly';
-};
-
-export type ChargePayload = {
-  loanId: string;
-  installmentId?: string;
-  amount: number;
-  method?: string;
-};
 
 const generateId = () => {
   if (typeof globalThis.crypto?.randomUUID === 'function') {
@@ -44,6 +28,9 @@ class MockDb {
   private seed() {
     if (this.loans.length > 0) return;
 
+    const firstInstallmentDate = today();
+    firstInstallmentDate.setDate(firstInstallmentDate.getDate() + 7);
+
     const baseLoan: Loan = {
       id: generateId(),
       borrowerName: 'Lucia Diaz',
@@ -58,8 +45,9 @@ class MockDb {
         numberOfInstallments: 3,
         frequency: 'weekly',
         principal: 1500,
-        interestRate: 15
-      })
+        interestRate: 15,
+        firstDueDate: firstInstallmentDate.toISOString(),
+      }),
     };
 
     this.loans.push(baseLoan);
@@ -67,7 +55,7 @@ class MockDb {
       { id: '1', email: 'owner@prestaya.io', role: 'owner' },
       { id: '2', email: 'supervisor@prestaya.io', role: 'supervisor' },
       { id: '3', email: 'caja@prestaya.io', role: 'caja' },
-      { id: '4', email: 'auditor@prestaya.io', role: 'readonly' }
+      { id: '4', email: 'auditor@prestaya.io', role: 'readonly' },
     ];
   }
 
@@ -75,12 +63,13 @@ class MockDb {
     return clone(this.loans);
   }
 
-  createLoan(payload: CreateLoanPayload): Loan {
+  createLoan(payload: CreateLoanInput): Loan {
     const installments = this.generateInstallments({
       numberOfInstallments: payload.numberOfInstallments,
       frequency: payload.frequency,
       principal: payload.principal,
-      interestRate: payload.interestRate
+      interestRate: payload.interestRate,
+      firstDueDate: payload.firstDueDate,
     });
 
     const loan: Loan = {
@@ -93,14 +82,14 @@ class MockDb {
       frequency: payload.frequency,
       status: 'PENDING',
       issuedAt: today().toISOString(),
-      installments
+      installments,
     };
 
     this.loans.push(loan);
     return clone(loan);
   }
 
-  charge(payload: ChargePayload) {
+  charge(payload: ChargeLoanInput) {
     const loan = this.loans.find((item) => item.id === payload.loanId);
     if (!loan) {
       throw new Error('Loan not found');
@@ -122,14 +111,17 @@ class MockDb {
       loanId: loan.id,
       installmentId: installment.id,
       amount: payload.amount,
-      paidAt: installment.paidAt
+      paidAt: installment.paidAt ?? today().toISOString(),
+      method: payload.method ?? 'cash',
     };
     this.payments.push(payment);
 
     if (loan.installments.every((item) => item.status === 'PAID')) {
       loan.status = 'PAID';
     } else {
-      const overdueExists = loan.installments.some((item) => this.isOverdue(item));
+      const overdueExists = loan.installments.some((item) =>
+        this.isOverdue(item),
+      );
       loan.status = overdueExists ? 'OVERDUE' : 'PENDING';
     }
 
@@ -137,16 +129,23 @@ class MockDb {
   }
 
   summary(): CashSummary {
-    const totalCollected = this.payments.reduce((acc, payment) => acc + payment.amount, 0);
+    const totalCollected = this.payments.reduce(
+      (acc, payment) => acc + payment.amount,
+      0,
+    );
     const installments = this.loans.flatMap((loan) => loan.installments);
 
-    const pendingInstallments = installments.filter((inst) => inst.status !== 'PAID').length;
-    const overdueInstallments = installments.filter((inst) => this.isOverdue(inst)).length;
+    const pendingInstallments = installments.filter(
+      (inst) => inst.status !== 'PAID',
+    ).length;
+    const overdueInstallments = installments.filter((inst) =>
+      this.isOverdue(inst),
+    ).length;
 
     return {
       totalCollected,
       pendingInstallments,
-      overdueInstallments
+      overdueInstallments,
     };
   }
 
@@ -163,20 +162,24 @@ class MockDb {
     frequency: 'weekly' | 'biweekly' | 'monthly';
     principal: number;
     interestRate: number;
+    firstDueDate: string;
   }): Installment[] {
     const total = params.principal * (1 + params.interestRate / 100);
     const amount = Number((total / params.numberOfInstallments).toFixed(2));
     const installments: Installment[] = [];
-    const start = today();
+    const start = new Date(params.firstDueDate);
+    if (Number.isNaN(start.getTime())) {
+      throw new Error('Invalid first due date');
+    }
 
     for (let i = 0; i < params.numberOfInstallments; i += 1) {
       const dueDate = new Date(start);
       if (params.frequency === 'weekly') {
-        dueDate.setDate(dueDate.getDate() + (i + 1) * 7);
+        dueDate.setDate(dueDate.getDate() + i * 7);
       } else if (params.frequency === 'biweekly') {
-        dueDate.setDate(dueDate.getDate() + (i + 1) * 14);
+        dueDate.setDate(dueDate.getDate() + i * 14);
       } else {
-        dueDate.setMonth(dueDate.getMonth() + (i + 1));
+        dueDate.setMonth(dueDate.getMonth() + i);
       }
 
       installments.push({
@@ -184,7 +187,7 @@ class MockDb {
         sequence: i + 1,
         dueDate: dueDate.toISOString(),
         amount,
-        status: 'PENDING'
+        status: 'PENDING',
       });
     }
 

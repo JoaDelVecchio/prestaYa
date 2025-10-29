@@ -1,14 +1,23 @@
-import { BadRequestException, Body, Controller, Headers, Post, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Headers,
+  Post,
+  ForbiddenException,
+  Req,
+} from '@nestjs/common';
 import { Public } from '../common/decorators/public.decorator';
 import { PaymentReceivedDto } from './dto/payment-received.dto';
 import { LoanService } from '../loans/loan.service';
 import { RequestContextService } from '../common/request-context.service';
+import { RequestWithContext } from '../common/request-context';
 
 @Controller('webhooks/n8n')
 export class WebhookController {
   constructor(
     private readonly loans: LoanService,
-    private readonly context: RequestContextService
+    private readonly context: RequestContextService,
   ) {}
 
   @Post('payment-received')
@@ -16,9 +25,11 @@ export class WebhookController {
   async paymentReceived(
     @Body() dto: PaymentReceivedDto,
     @Headers('x-org-id') orgId?: string,
-    @Headers('x-webhook-secret') secret?: string
+    @Headers('x-webhook-secret') secret?: string,
+    @Req() req?: RequestWithContext,
   ) {
-    const expectedSecret = process.env.N8N_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET;
+    const expectedSecret =
+      process.env.N8N_WEBHOOK_SECRET || process.env.WEBHOOK_SECRET;
     if (expectedSecret && secret !== expectedSecret) {
       throw new ForbiddenException('Invalid webhook secret');
     }
@@ -27,18 +38,23 @@ export class WebhookController {
       throw new BadRequestException('Missing organisation header');
     }
 
-    return this.context.run(
-      {
-        orgId,
-        userId: 'n8n-webhook',
-        role: 'owner'
-      },
-      () =>
-        this.loans.charge(dto.loanId, {
-          installmentId: dto.installmentId,
-          amount: dto.amount,
-          method: dto.method
-        })
-    );
+    if (!req) {
+      throw new BadRequestException('Request unavailable');
+    }
+
+    const ctx = {
+      orgId,
+      userId: 'n8n-webhook',
+      role: 'owner' as const,
+    };
+
+    return this.context.runWithRequest(req, () => {
+      this.context.setContext(req, ctx);
+      return this.loans.charge(dto.loanId, {
+        installmentId: dto.installmentId,
+        amount: dto.amount,
+        method: dto.method,
+      });
+    });
   }
 }

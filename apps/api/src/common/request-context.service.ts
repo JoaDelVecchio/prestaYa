@@ -1,26 +1,35 @@
 import { Injectable } from '@nestjs/common';
 import { AsyncLocalStorage } from 'node:async_hooks';
-
-export type RequestContext = {
-  orgId: string;
-  userId: string;
-  role: string;
-  email?: string;
-};
+import { RequestContext, RequestWithContext } from './request-context';
 
 @Injectable()
 export class RequestContextService {
-  private readonly storage = new AsyncLocalStorage<RequestContext>();
+  private readonly requestStorage = new AsyncLocalStorage<RequestWithContext>();
+  private readonly contexts = new WeakMap<RequestWithContext, RequestContext>();
+
+  runWithRequest<T>(request: RequestWithContext, callback: () => T): T {
+    return this.requestStorage.run(request, callback);
+  }
 
   run<T>(context: RequestContext, callback: () => T): T {
-    return this.storage.run(context, callback);
+    const request: RequestWithContext = { context } as RequestWithContext;
+    this.contexts.set(request, context);
+    return this.runWithRequest(request, callback);
+  }
+
+  setContext(request: RequestWithContext, context: RequestContext): void {
+    this.contexts.set(request, context);
   }
 
   get(): RequestContext {
-    const store = this.storage.getStore();
-    if (!store) {
+    const request = this.requestStorage.getStore();
+    if (!request) {
       throw new Error('Request context not available');
     }
-    return store;
+    const context = this.contexts.get(request);
+    if (!context) {
+      throw new Error('Request context not available');
+    }
+    return context;
   }
 }

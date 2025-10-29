@@ -30,18 +30,18 @@ services:
       SUPABASE_URL: http://supabase-rest:3000
       SUPABASE_SERVICE_ROLE_KEY: dev-key
       SUPABASE_JWT_SECRET: dev-super-secret
-      PORT: 3001
+      PORT: 3131
     depends_on:
       - supabase-db
     ports:
-      - '3001:3001'
+      - '3131:3131'
 
   web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
     environment:
-      NEXT_PUBLIC_API_URL: http://api:3001/api
+      NEXT_PUBLIC_API_URL: http://api:3131/api
       SUPABASE_JWT_SECRET: dev-super-secret
     depends_on:
       - api

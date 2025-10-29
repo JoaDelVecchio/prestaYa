@@ -4,7 +4,16 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { chargeLoan, getLoans } from '@/lib/api';
 import { Loan } from '@/lib/types';
-import { ActionButton, Card, CardContent, CardHeader, CardTitle, Input, Label, Badge } from '@prestaya/ui';
+import {
+  ActionButton,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Input,
+  Label,
+  Badge,
+} from '@prestaya/ui';
 import { useActionFeedback } from '@/hooks/useActionFeedback';
 
 export const dynamic = 'force-dynamic';
@@ -13,7 +22,7 @@ const STATUS_BADGE_CLASS = 'min-w-[96px] justify-center';
 const FREQUENCY_LABEL: Record<Loan['frequency'], string> = {
   weekly: 'semanal',
   biweekly: 'quincenal',
-  monthly: 'mensual'
+  monthly: 'mensual',
 };
 
 function ChargePageContent() {
@@ -44,7 +53,9 @@ function ChargePageContent() {
   const filteredLoans = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     return loans.filter((loan) => {
-      const hasPending = loan.installments.some((inst) => inst.status !== 'PAID');
+      const hasPending = loan.installments.some(
+        (inst) => inst.status !== 'PAID',
+      );
       if (!hasPending) {
         return false;
       }
@@ -57,11 +68,17 @@ function ChargePageContent() {
   }, [loans, searchTerm]);
 
   const summary = useMemo(() => {
-    const activeLoans = loans.filter((loan) => loan.installments.some((inst) => inst.status !== 'PAID'));
-    const overdueLoans = loans.filter((loan) => loan.installments.some((inst) => inst.status === 'OVERDUE'));
+    const activeLoans = loans.filter((loan) =>
+      loan.installments.some((inst) => inst.status !== 'PAID'),
+    );
+    const overdueLoans = loans.filter((loan) =>
+      loan.installments.some((inst) => inst.status === 'OVERDUE'),
+    );
     const pendingInstallments = loans.reduce(
-      (total, loan) => total + loan.installments.filter((inst) => inst.status !== 'PAID').length,
-      0
+      (total, loan) =>
+        total +
+        loan.installments.filter((inst) => inst.status !== 'PAID').length,
+      0,
     );
     const totalDue = loans.reduce(
       (total, loan) =>
@@ -69,7 +86,7 @@ function ChargePageContent() {
         loan.installments
           .filter((inst) => inst.status !== 'PAID')
           .reduce((sum, inst) => sum + inst.amount, 0),
-      0
+      0,
     );
 
     return {
@@ -77,31 +94,50 @@ function ChargePageContent() {
       activeLoans: activeLoans.length,
       overdueLoans: overdueLoans.length,
       pendingInstallments,
-      totalDue
+      totalDue,
     };
   }, [loans]);
 
-  const selectedLoan = useMemo(() => loans.find((loan) => loan.id === selectedLoanId) ?? null, [loans, selectedLoanId]);
+  const selectedLoan = useMemo(
+    () => loans.find((loan) => loan.id === selectedLoanId) ?? null,
+    [loans, selectedLoanId],
+  );
 
   return (
     <div className="flex flex-col gap-6">
       <Card className="transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-[2px] hover:shadow-hover">
         <CardHeader>
           <CardTitle>Resumen de cobranza</CardTitle>
-          <p className="text-sm text-body-light/60">Monitoreá el estado de tus cobros y cuotas pendientes.</p>
+          <p className="text-sm text-body-light/60">
+            Monitoreá el estado de tus cobros y cuotas pendientes.
+          </p>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-4">
-          <SummaryMetric label="Préstamos activos" value={summary.activeLoans} />
-          <SummaryMetric label="Préstamos con mora" value={summary.overdueLoans} />
-          <SummaryMetric label="Cuotas pendientes" value={summary.pendingInstallments} />
-          <SummaryMetric label="Total adeudado" value={formatCurrency(summary.totalDue)} />
+          <SummaryMetric
+            label="Préstamos activos"
+            value={summary.activeLoans}
+          />
+          <SummaryMetric
+            label="Préstamos con mora"
+            value={summary.overdueLoans}
+          />
+          <SummaryMetric
+            label="Cuotas pendientes"
+            value={summary.pendingInstallments}
+          />
+          <SummaryMetric
+            label="Total adeudado"
+            value={formatCurrency(summary.totalDue)}
+          />
         </CardContent>
       </Card>
 
       <Card className="transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-[2px] hover:shadow-hover">
         <CardHeader className="space-y-2">
           <CardTitle>Gestionar cobros</CardTitle>
-          <p className="text-sm text-body-light/60">Seleccioná un préstamo para registrar la próxima cuota.</p>
+          <p className="text-sm text-body-light/60">
+            Seleccioná un préstamo para registrar la próxima cuota.
+          </p>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
           <div className="flex flex-col gap-3">
@@ -112,12 +148,18 @@ function ChargePageContent() {
                   id="loan-search"
                   placeholder="Buscar por DNI"
                   value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value.replace(/\D/g, ''))}
+                  onChange={(event) =>
+                    setSearchTerm(event.target.value.replace(/\D/g, ''))
+                  }
                   className="pl-12 pr-4"
                 />
-                <span className="pointer-events-none absolute left-5 text-body-light/40">🔍</span>
+                <span className="pointer-events-none absolute left-5 text-body-light/40">
+                  🔍
+                </span>
               </div>
-              {feedbackMessage && <p className="text-sm text-body-light/70">{feedbackMessage}</p>}
+              {feedbackMessage && (
+                <p className="text-sm text-body-light/70">{feedbackMessage}</p>
+              )}
             </div>
           </div>
 
@@ -132,12 +174,17 @@ function ChargePageContent() {
               />
             ))}
             {filteredLoans.length === 0 && (
-              <p className="text-sm text-body-light/70">No se encontraron préstamos con ese criterio.</p>
+              <p className="text-sm text-body-light/70">
+                No se encontraron préstamos con ese criterio.
+              </p>
             )}
           </div>
         </CardContent>
       </Card>
-      <LoanDetailsModal loan={selectedLoan} onClose={() => setSelectedLoanId(null)} />
+      <LoanDetailsModal
+        loan={selectedLoan}
+        onClose={() => setSelectedLoanId(null)}
+      />
     </div>
   );
 }
@@ -157,22 +204,50 @@ interface LoanCardProps {
   onShowDetails: () => void;
 }
 
-function LoanCard({ loan, onRefresh, onFeedback, onShowDetails }: LoanCardProps) {
+function LoanCard({
+  loan,
+  onRefresh,
+  onFeedback,
+  onShowDetails,
+}: LoanCardProps) {
   const action = useActionFeedback({
     defaultLabel: 'Cobrar cuota',
     successLabel: '¡Listo!',
-    errorLabel: 'Reintentar'
+    errorLabel: 'Reintentar',
   });
 
-  const nextInstallment = useMemo(() => loan.installments.find((inst) => inst.status !== 'PAID'), [loan]);
+  const nextInstallment = useMemo(
+    () => loan.installments.find((inst) => inst.status !== 'PAID'),
+    [loan],
+  );
 
-  const pendingInstallments = useMemo(() => loan.installments.filter((inst) => inst.status !== 'PAID'), [loan]);
-  const overdueCount = useMemo(() => loan.installments.filter((inst) => inst.status === 'OVERDUE').length, [loan]);
-  const paidCount = useMemo(() => loan.installments.filter((inst) => inst.status === 'PAID').length, [loan]);
+  const pendingInstallments = useMemo(
+    () => loan.installments.filter((inst) => inst.status !== 'PAID'),
+    [loan],
+  );
+  const overdueCount = useMemo(
+    () => loan.installments.filter((inst) => inst.status === 'OVERDUE').length,
+    [loan],
+  );
+  const paidCount = useMemo(
+    () => loan.installments.filter((inst) => inst.status === 'PAID').length,
+    [loan],
+  );
   const pendingCount = pendingInstallments.length;
-  const pendingAmount = pendingInstallments.reduce((sum, inst) => sum + inst.amount, 0);
+  const pendingAmount = pendingInstallments.reduce(
+    (sum, inst) => sum + inst.amount,
+    0,
+  );
 
-  const statusBadge = overdueCount > 0 ? { variant: 'danger', label: 'En mora' } : pendingCount > 0 ? { variant: 'warning', label: 'Pendiente' } : { variant: 'success', label: 'Al día' };
+  const statusBadge: {
+    variant: 'danger' | 'warning' | 'success';
+    label: string;
+  } =
+    overdueCount > 0
+      ? { variant: 'danger', label: 'En mora' }
+      : pendingCount > 0
+        ? { variant: 'warning', label: 'Pendiente' }
+        : { variant: 'success', label: 'Al día' };
 
   const handleCharge = useCallback(async () => {
     if (!nextInstallment) {
@@ -186,7 +261,7 @@ function LoanCard({ loan, onRefresh, onFeedback, onShowDetails }: LoanCardProps)
       await chargeLoan({
         loanId: loan.id,
         installmentId: nextInstallment.id,
-        amount: nextInstallment.amount
+        amount: nextInstallment.amount,
       });
       await onRefresh();
       action.success({ message: 'Cobro registrado' });
@@ -202,7 +277,9 @@ function LoanCard({ loan, onRefresh, onFeedback, onShowDetails }: LoanCardProps)
       <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-lg font-semibold text-body-light">{loan.borrowerName}</p>
+            <p className="text-lg font-semibold text-body-light">
+              {loan.borrowerName}
+            </p>
             <Badge
               variant={statusBadge.variant}
               className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] ${STATUS_BADGE_CLASS}`}
@@ -215,24 +292,38 @@ function LoanCard({ loan, onRefresh, onFeedback, onShowDetails }: LoanCardProps)
             <span>Tel {loan.borrowerPhone || '—'}</span>
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
-            <LoanInfoRow label="Principal" value={formatCurrency(loan.principal)} />
-            <LoanInfoRow label="Tasa" value={`${loan.interestRate}% ${getFrequencyLabel(loan.frequency)}`} />
-            <LoanInfoRow label="Total pendiente" value={formatCurrency(pendingAmount)} />
+            <LoanInfoRow
+              label="Principal"
+              value={formatCurrency(loan.principal)}
+            />
+            <LoanInfoRow
+              label="Tasa"
+              value={`${loan.interestRate}% ${getFrequencyLabel(loan.frequency)}`}
+            />
+            <LoanInfoRow
+              label="Total pendiente"
+              value={formatCurrency(pendingAmount)}
+            />
             <LoanInfoRow label="Emitido" value={formatDate(loan.issuedAt)} />
           </div>
         </div>
 
         <div className="flex w-full flex-col gap-3 md:max-w-sm">
           <div className="rounded-xl border border-white/30 bg-white/75 px-4 py-4 shadow-subtle backdrop-blur-md">
-            <p className="text-xs font-medium uppercase tracking-[0.12em] text-body-light/60">Próxima cuota</p>
+            <p className="text-xs font-medium uppercase tracking-[0.12em] text-body-light/60">
+              Próxima cuota
+            </p>
             {nextInstallment ? (
               <div className="mt-3 space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-body-light">
-                      Cuota {nextInstallment.sequence} / {loan.installments.length}
+                      Cuota {nextInstallment.sequence} /{' '}
+                      {loan.installments.length}
                     </p>
-                    <p className="text-xs text-body-light/60">Vence {formatDate(nextInstallment.dueDate)}</p>
+                    <p className="text-xs text-body-light/60">
+                      Vence {formatDate(nextInstallment.dueDate)}
+                    </p>
                   </div>
                   <Badge
                     variant={
@@ -248,12 +339,18 @@ function LoanCard({ loan, onRefresh, onFeedback, onShowDetails }: LoanCardProps)
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between rounded-lg border border-white/30 bg-white/70 px-4 py-2">
-                  <span className="text-xs font-medium uppercase tracking-[0.12em] text-body-light/60">Importe</span>
-                  <span className="text-lg font-semibold text-body-light">{formatCurrency(nextInstallment.amount)}</span>
+                  <span className="text-xs font-medium uppercase tracking-[0.12em] text-body-light/60">
+                    Importe
+                  </span>
+                  <span className="text-lg font-semibold text-body-light">
+                    {formatCurrency(nextInstallment.amount)}
+                  </span>
                 </div>
               </div>
             ) : (
-              <p className="mt-3 text-sm text-body-light/70">Todas las cuotas están pagas 🎉</p>
+              <p className="mt-3 text-sm text-body-light/70">
+                Todas las cuotas están pagas 🎉
+              </p>
             )}
           </div>
 
@@ -267,7 +364,6 @@ function LoanCard({ loan, onRefresh, onFeedback, onShowDetails }: LoanCardProps)
                 Ver detalles
               </button>
               <ActionButton
-                type="button"
                 status={action.status}
                 label={
                   nextInstallment
@@ -287,7 +383,9 @@ function LoanCard({ loan, onRefresh, onFeedback, onShowDetails }: LoanCardProps)
                 onClick={handleCharge}
               />
             </div>
-            {action.message && <p className="text-xs text-body-light/70">{action.message}</p>}
+            {action.message && (
+              <p className="text-xs text-body-light/70">{action.message}</p>
+            )}
           </div>
         </div>
       </div>
@@ -295,10 +393,18 @@ function LoanCard({ loan, onRefresh, onFeedback, onShowDetails }: LoanCardProps)
   );
 }
 
-function SummaryMetric({ label, value }: { label: string; value: string | number }) {
+function SummaryMetric({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
   return (
     <div className="rounded-2xl border border-white/20 bg-white/70 px-5 py-4 shadow-subtle backdrop-blur-lg transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-[2px] hover:border-white/35 hover:bg-white/80 hover:shadow-hover">
-      <p className="text-xs font-medium uppercase tracking-[0.12em] text-body-light/60">{label}</p>
+      <p className="text-xs font-medium uppercase tracking-[0.12em] text-body-light/60">
+        {label}
+      </p>
       <p className="text-2xl font-semibold text-body-light">{value}</p>
     </div>
   );
@@ -307,23 +413,38 @@ function SummaryMetric({ label, value }: { label: string; value: string | number
 function LoanInfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1 rounded-xl border border-white/30 bg-white/75 px-4 py-3 text-sm text-body-light">
-      <span className="text-xs font-medium uppercase tracking-[0.12em] text-body-light/60">{label}</span>
+      <span className="text-xs font-medium uppercase tracking-[0.12em] text-body-light/60">
+        {label}
+      </span>
       <span className="text-sm font-semibold text-body-light">{value}</span>
     </div>
   );
 }
 
-function LoanDetailsModal({ loan, onClose }: { loan: Loan | null; onClose: () => void }) {
+function LoanDetailsModal({
+  loan,
+  onClose,
+}: {
+  loan: Loan | null;
+  onClose: () => void;
+}) {
   const close = useCallback(() => {
     onClose();
   }, [onClose]);
 
   if (!loan) return null;
 
-  const paidCount = loan.installments.filter((inst) => inst.status === 'PAID').length;
-  const overdueCount = loan.installments.filter((inst) => inst.status === 'OVERDUE').length;
+  const paidCount = loan.installments.filter(
+    (inst) => inst.status === 'PAID',
+  ).length;
+  const overdueCount = loan.installments.filter(
+    (inst) => inst.status === 'OVERDUE',
+  ).length;
   const pendingCount = loan.installments.length - paidCount - overdueCount;
-  const totalPlanned = loan.installments.reduce((sum, inst) => sum + inst.amount, 0);
+  const totalPlanned = loan.installments.reduce(
+    (sum, inst) => sum + inst.amount,
+    0,
+  );
   const totalPaid = loan.installments
     .filter((inst) => inst.status === 'PAID')
     .reduce((sum, inst) => sum + inst.amount, 0);
@@ -342,26 +463,48 @@ function LoanDetailsModal({ loan, onClose }: { loan: Loan | null; onClose: () =>
         </CardHeader>
         <CardContent className="flex-1 space-y-6 overflow-y-auto pt-6 pr-1">
           <div className="grid gap-3 md:grid-cols-2">
-            <ModalMetric label="Principal" value={formatCurrency(loan.principal)} />
-            <ModalMetric label="Total planificado" value={formatCurrency(totalPlanned)} />
-            <ModalMetric label="Total cobrado" value={formatCurrency(totalPaid)} />
-            <ModalMetric label="Cuotas pagas" value={`${paidCount} de ${loan.installments.length}`} />
-            <ModalMetric label="Cuotas en mora" value={overdueCount.toString()} />
+            <ModalMetric
+              label="Principal"
+              value={formatCurrency(loan.principal)}
+            />
+            <ModalMetric
+              label="Total planificado"
+              value={formatCurrency(totalPlanned)}
+            />
+            <ModalMetric
+              label="Total cobrado"
+              value={formatCurrency(totalPaid)}
+            />
+            <ModalMetric
+              label="Cuotas pagas"
+              value={`${paidCount} de ${loan.installments.length}`}
+            />
+            <ModalMetric
+              label="Cuotas en mora"
+              value={overdueCount.toString()}
+            />
             <ModalMetric label="Emitido" value={formatDate(loan.issuedAt)} />
-            <ModalMetric label="Frecuencia" value={capitalizeFrequency(getFrequencyLabel(loan.frequency))} />
+            <ModalMetric
+              label="Frecuencia"
+              value={capitalizeFrequency(getFrequencyLabel(loan.frequency))}
+            />
           </div>
           <div className="space-y-3">
-            <p className="text-xs font-medium uppercase tracking-[0.12em] text-body-light/60">Plan de cuotas</p>
+            <p className="text-xs font-medium uppercase tracking-[0.12em] text-body-light/60">
+              Plan de cuotas
+            </p>
             <div className="space-y-2">
               {loan.installments.map((installment) => (
-                <LoanInstallmentRow key={installment.id ?? `${loan.id}-${installment.sequence}`} installment={installment} />
+                <LoanInstallmentRow
+                  key={installment.id ?? `${loan.id}-${installment.sequence}`}
+                  installment={installment}
+                />
               ))}
             </div>
           </div>
         </CardContent>
         <div className="flex flex-shrink-0 justify-end border-t border-white/20 px-6 py-4">
           <ActionButton
-            type="button"
             status="idle"
             label="Cerrar"
             onClick={close}
@@ -382,24 +525,42 @@ function LoanDetailsModal({ loan, onClose }: { loan: Loan | null; onClose: () =>
 function ModalMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border border-white/25 bg-white/70 px-4 py-3">
-      <p className="text-xs font-medium uppercase tracking-[0.12em] text-body-light/60">{label}</p>
+      <p className="text-xs font-medium uppercase tracking-[0.12em] text-body-light/60">
+        {label}
+      </p>
       <p className="text-sm font-semibold text-body-light">{value}</p>
     </div>
   );
 }
 
-function LoanInstallmentRow({ installment }: { installment: Loan['installments'][number] }) {
+function LoanInstallmentRow({
+  installment,
+}: {
+  installment: Loan['installments'][number];
+}) {
   const badgeVariant =
-    installment.status === 'PAID' ? 'success' : installment.status === 'OVERDUE' ? 'danger' : 'warning';
+    installment.status === 'PAID'
+      ? 'success'
+      : installment.status === 'OVERDUE'
+        ? 'danger'
+        : 'warning';
   return (
     <div className="grid gap-3 rounded-xl border border-white/25 bg-white/70 px-4 py-3 text-sm text-body-light md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_auto] md:items-center">
       <div className="space-y-1">
-        <p className="font-semibold text-body-light">Cuota {installment.sequence}</p>
-        <p className="text-xs text-body-light/60">Vence {formatDate(installment.dueDate)}</p>
+        <p className="font-semibold text-body-light">
+          Cuota {installment.sequence}
+        </p>
+        <p className="text-xs text-body-light/60">
+          Vence {formatDate(installment.dueDate)}
+        </p>
         {installment.paidAt ? (
-          <p className="text-xs text-body-light/60">Pagada el {formatDate(installment.paidAt)}</p>
+          <p className="text-xs text-body-light/60">
+            Pagada el {formatDate(installment.paidAt)}
+          </p>
         ) : (
-          <p className="text-xs text-body-light/60">{installment.status === 'OVERDUE' ? 'En mora' : 'Pendiente de pago'}</p>
+          <p className="text-xs text-body-light/60">
+            {installment.status === 'OVERDUE' ? 'En mora' : 'Pendiente de pago'}
+          </p>
         )}
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -407,7 +568,9 @@ function LoanInstallmentRow({ installment }: { installment: Loan['installments']
           {statusLabel(installment.status)}
         </Badge>
       </div>
-      <div className="text-right font-semibold text-body-light tabular-nums min-w-[100px]">{formatCurrency(installment.amount)}</div>
+      <div className="text-right font-semibold text-body-light tabular-nums min-w-[100px]">
+        {formatCurrency(installment.amount)}
+      </div>
     </div>
   );
 }
@@ -427,7 +590,7 @@ function formatDate(value: string) {
   return new Date(value).toLocaleDateString('es-AR', {
     day: '2-digit',
     month: 'short',
-    year: 'numeric'
+    year: 'numeric',
   });
 }
 
@@ -435,7 +598,7 @@ const currencyFormatter = new Intl.NumberFormat('es-AR', {
   style: 'currency',
   currency: 'ARS',
   minimumFractionDigits: 2,
-  maximumFractionDigits: 2
+  maximumFractionDigits: 2,
 });
 
 function formatCurrency(amount: number) {

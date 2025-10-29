@@ -12,6 +12,9 @@ export interface ActionButtonProps extends ButtonProps {
   flash?: boolean;
   shake?: boolean;
   celebrate?: boolean;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  disabled?: boolean;
+  type?: React.ButtonHTMLAttributes<HTMLButtonElement>['type'];
 }
 
 const confettiColors = ['#0A84FF', '#30D158', '#FF9F0A', '#FF453A', '#AC8AF8'];
@@ -21,16 +24,21 @@ const ConfettiOverlay: React.FC = () => (
     {Array.from({ length: 12 }).map((_, index) => (
       <span
         key={index}
-        style={{
-          '--confetti-index': index,
-          '--confetti-color': confettiColors[index % confettiColors.length]
-        } as React.CSSProperties}
+        style={
+          {
+            '--confetti-index': index,
+            '--confetti-color': confettiColors[index % confettiColors.length],
+          } as React.CSSProperties
+        }
       />
     ))}
   </span>
 );
 
-export const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
+export const ActionButton = React.forwardRef<
+  HTMLButtonElement,
+  ActionButtonProps
+>(
   (
     {
       label,
@@ -47,7 +55,7 @@ export const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProp
       children,
       ...rest
     },
-    ref
+    ref,
   ) => {
     const icon = () => {
       if (showSpinner) {
@@ -78,7 +86,10 @@ export const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProp
     };
 
     return (
-      <div className={clsx('relative inline-flex', shake && 'action-shake')} aria-live="polite">
+      <div
+        className={clsx('relative inline-flex', shake && 'action-shake')}
+        aria-live="polite"
+      >
         {showProgress && <span className="action-progress" />}
         <Button
           ref={ref}
@@ -88,7 +99,7 @@ export const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProp
             status === 'running' && 'action-running',
             status === 'success' && 'action-success',
             status === 'error' && 'action-error',
-            className
+            className,
           )}
           disabled={disabled || status === 'running'}
           {...rest}
@@ -102,7 +113,7 @@ export const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProp
         </Button>
       </div>
     );
-  }
+  },
 );
 
 ActionButton.displayName = 'ActionButton';
