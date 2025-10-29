@@ -28,8 +28,7 @@ class MockDb {
   private seed() {
     if (this.loans.length > 0) return;
 
-    const firstInstallmentDate = today();
-    firstInstallmentDate.setDate(firstInstallmentDate.getDate() + 7);
+    const issuedAt = today();
 
     const baseLoan: Loan = {
       id: generateId(),
@@ -40,13 +39,13 @@ class MockDb {
       interestRate: 15,
       frequency: 'weekly',
       status: 'PENDING',
-      issuedAt: today().toISOString(),
+      issuedAt: issuedAt.toISOString(),
       installments: this.generateInstallments({
         numberOfInstallments: 3,
         frequency: 'weekly',
         principal: 1500,
         interestRate: 15,
-        firstDueDate: firstInstallmentDate.toISOString(),
+        issuedAt,
       }),
     };
 
@@ -64,12 +63,13 @@ class MockDb {
   }
 
   createLoan(payload: CreateLoanInput): Loan {
+    const issuedAt = today();
     const installments = this.generateInstallments({
       numberOfInstallments: payload.numberOfInstallments,
       frequency: payload.frequency,
       principal: payload.principal,
       interestRate: payload.interestRate,
-      firstDueDate: payload.firstDueDate,
+      issuedAt,
     });
 
     const loan: Loan = {
@@ -81,7 +81,7 @@ class MockDb {
       interestRate: payload.interestRate,
       frequency: payload.frequency,
       status: 'PENDING',
-      issuedAt: today().toISOString(),
+      issuedAt: issuedAt.toISOString(),
       installments,
     };
 
@@ -162,15 +162,12 @@ class MockDb {
     frequency: 'weekly' | 'biweekly' | 'monthly';
     principal: number;
     interestRate: number;
-    firstDueDate: string;
+    issuedAt: Date;
   }): Installment[] {
     const total = params.principal * (1 + params.interestRate / 100);
     const amount = Number((total / params.numberOfInstallments).toFixed(2));
     const installments: Installment[] = [];
-    const start = new Date(params.firstDueDate);
-    if (Number.isNaN(start.getTime())) {
-      throw new Error('Invalid first due date');
-    }
+    const start = this.calculateFirstDueDate(params.issuedAt, params.frequency);
 
     for (let i = 0; i < params.numberOfInstallments; i += 1) {
       const dueDate = new Date(start);
@@ -192,6 +189,22 @@ class MockDb {
     }
 
     return installments;
+  }
+
+  private calculateFirstDueDate(
+    baseDate: Date,
+    frequency: 'weekly' | 'biweekly' | 'monthly',
+  ) {
+    const due = new Date(baseDate);
+    due.setHours(0, 0, 0, 0);
+    if (frequency === 'weekly') {
+      due.setDate(due.getDate() + 7);
+    } else if (frequency === 'biweekly') {
+      due.setDate(due.getDate() + 14);
+    } else {
+      due.setMonth(due.getMonth() + 1);
+    }
+    return due;
   }
 
   private isOverdue(installment: Installment) {

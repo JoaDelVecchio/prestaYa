@@ -27,7 +27,7 @@ export default function ProtectedLayout({ children }: PropsWithChildren) {
       <aside className="glass-surface sticky top-6 ml-6 mt-6 flex h-[calc(100vh-3rem)] w-64 flex-col rounded-3xl border border-white/40 p-6 shadow-subtle">
         <div className="mb-8">
           <p className="text-lg font-semibold text-body-light">PrestaYa</p>
-          <p className="text-xs text-body-light/60">Cash-only Loan Manager</p>
+          <p className="text-xs text-body-light/60">Gestión de Préstamos</p>
         </div>
         <nav className="flex flex-1 flex-col gap-1.5">
           {navigation.map((item) => {
@@ -64,7 +64,7 @@ export default function ProtectedLayout({ children }: PropsWithChildren) {
           </Button>
         </div>
       </aside>
-      <main className="flex-1 px-10 py-12">
+      <main className="flex-1 px-10 pt-6 pb-12">
         <div className="mx-auto max-w-5xl space-y-6">{children}</div>
       </main>
     </div>

@@ -1,4 +1,12 @@
-import { IsDateString, IsInt, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, Min } from 'class-validator';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+  Min,
+} from 'class-validator';
 
 export class CreateLoanDto {
   @IsString()
@@ -28,9 +36,6 @@ export class CreateLoanDto {
   @IsInt()
   @IsPositive()
   numberOfInstallments!: number;
-
-  @IsDateString()
-  firstDueDate!: string;
 
   @IsString()
   frequency!: 'weekly' | 'biweekly' | 'monthly';

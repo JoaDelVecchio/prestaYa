@@ -8,7 +8,6 @@ export type CreateLoanInput = {
   interestRate: number;
   numberOfInstallments: number;
   frequency: Loan['frequency'];
-  firstDueDate: string;
 };
 
 export type ChargeLoanInput = {

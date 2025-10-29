@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { Prisma, LoanStatus, InstallmentStatus } from '@prestaya/prisma';
 import { PrismaService } from '../prisma/prisma.service';
 import { RequestContextService } from '../common/request-context.service';
@@ -15,25 +19,24 @@ export class LoanService {
     private readonly prisma: PrismaService,
     private readonly context: RequestContextService,
     private readonly activity: ActivityService,
-    private readonly receiptService: ReceiptService
+    private readonly receiptService: ReceiptService,
   ) {}
 
   async create(dto: CreateLoanDto) {
     const ctx = this.context.get();
     const issuedAt = new Date();
-    const firstDue = new Date(dto.firstDueDate);
-    if (Number.isNaN(firstDue.getTime())) {
-      throw new BadRequestException('Invalid first due date');
-    }
+    const firstDue = this.calculateFirstDueDate(issuedAt, dto.frequency);
 
     const total = dto.principal * (1 + dto.interestRate / 100);
-    const installmentValue = parseFloat((total / dto.numberOfInstallments).toFixed(2));
+    const installmentValue = parseFloat(
+      (total / dto.numberOfInstallments).toFixed(2),
+    );
 
     const installmentsData = this.generateInstallments({
       count: dto.numberOfInstallments,
       firstDueDate: firstDue,
       frequency: dto.frequency,
-      amount: installmentValue
+      amount: installmentValue,
     });
 
     const payload: Prisma.LoanCreateInput = {
@@ -46,7 +49,7 @@ export class LoanService {
       status: LoanStatus.PENDING,
       issuedAt,
       organisation: {
-        connect: { id: ctx.orgId }
+        connect: { id: ctx.orgId },
       },
       installments: {
         createMany: {
@@ -54,22 +57,27 @@ export class LoanService {
             sequence: idx + 1,
             dueDate: installment.dueDate,
             amount: new Prisma.Decimal(installment.amount),
-            orgId: ctx.orgId
-          }))
-        }
-      }
+            orgId: ctx.orgId,
+          })),
+        },
+      },
     };
 
     const loan = await this.prisma.loan.create({
       data: payload,
       include: {
         installments: {
-          orderBy: { sequence: 'asc' }
-        }
-      }
+          orderBy: { sequence: 'asc' },
+        },
+      },
     });
 
-    await this.activity.log(loan.id, 'loan.created', null, loan as unknown as Record<string, unknown>);
+    await this.activity.log(
+      loan.id,
+      'loan.created',
+      null,
+      loan as unknown as Record<string, unknown>,
+    );
 
     return loan;
   }
@@ -79,8 +87,8 @@ export class LoanService {
     return this.prisma.loan.findMany({
       where: { orgId: ctx.orgId },
       include: {
-        installments: { orderBy: { sequence: 'asc' } }
-      }
+        installments: { orderBy: { sequence: 'asc' } },
+      },
     });
   }
 
@@ -90,8 +98,8 @@ export class LoanService {
       where: { id, orgId: ctx.orgId },
       include: {
         installments: { orderBy: { sequence: 'asc' } },
-        payments: { orderBy: { paidAt: 'desc' } }
-      }
+        payments: { orderBy: { paidAt: 'desc' } },
+      },
     });
 
     if (!loan) {
@@ -111,27 +119,34 @@ export class LoanService {
         borrowerName: dto.borrowerName,
         borrowerPhone: dto.borrowerPhone,
         borrowerDni: dto.borrowerDni,
-        interestRate: dto.interestRate ? new Prisma.Decimal(dto.interestRate) : undefined,
+        interestRate: dto.interestRate
+          ? new Prisma.Decimal(dto.interestRate)
+          : undefined,
         maturityDate: dto.maturityDate ? new Date(dto.maturityDate) : undefined,
-        status: dto.status
+        status: dto.status,
       },
       include: {
-        installments: { orderBy: { sequence: 'asc' } }
-      }
+        installments: { orderBy: { sequence: 'asc' } },
+      },
     });
 
     if (updated.orgId !== ctx.orgId) {
       throw new NotFoundException('Loan not found in organisation');
     }
 
-    await this.activity.log(id, 'loan.updated', existing, updated as unknown as Record<string, unknown>);
+    await this.activity.log(
+      id,
+      'loan.updated',
+      existing,
+      updated as unknown as Record<string, unknown>,
+    );
     return updated;
   }
 
   async remove(id: string) {
     const ctx = this.context.get();
     const result = await this.prisma.loan.deleteMany({
-      where: { id, orgId: ctx.orgId }
+      where: { id, orgId: ctx.orgId },
     });
 
     if (result.count === 0) {
@@ -146,7 +161,10 @@ export class LoanService {
     const ctx = this.context.get();
     const loan = await this.findOne(id);
 
-    const installment = await this.resolveInstallment(loan.id, dto.installmentId);
+    const installment = await this.resolveInstallment(
+      loan.id,
+      dto.installmentId,
+    );
 
     if (installment.status === InstallmentStatus.PAID) {
       throw new BadRequestException('Installment already paid');
@@ -161,30 +179,30 @@ export class LoanService {
         loanId: loan.id,
         orgId: ctx.orgId,
         method: dto.method,
-        metadata: {}
-      }
+        metadata: {},
+      },
     });
 
     await this.prisma.installment.update({
       where: { id: installment.id },
       data: {
         status: InstallmentStatus.PAID,
-        paidAt: new Date()
-      }
+        paidAt: new Date(),
+      },
     });
 
     const remainingPending = await this.prisma.installment.count({
       where: {
         loanId: loan.id,
         orgId: ctx.orgId,
-        status: { in: [InstallmentStatus.PENDING, InstallmentStatus.OVERDUE] }
-      }
+        status: { in: [InstallmentStatus.PENDING, InstallmentStatus.OVERDUE] },
+      },
     });
 
     if (remainingPending === 0) {
       await this.prisma.loan.update({
         where: { id: loan.id },
-        data: { status: LoanStatus.PAID }
+        data: { status: LoanStatus.PAID },
       });
     }
 
@@ -195,8 +213,8 @@ export class LoanService {
         id: payment.id,
         amount: amountDecimal.toFixed(2),
         paidAt: payment.paidAt,
-        method: payment.method ?? undefined
-      }
+        method: payment.method ?? undefined,
+      },
     });
 
     await this.prisma.receipt.create({
@@ -206,19 +224,19 @@ export class LoanService {
         paymentId: payment.id,
         storagePath: receipt.storagePath,
         signedUrl: receipt.signedUrl,
-        expiresAt: receipt.expiresAt
-      }
+        expiresAt: receipt.expiresAt,
+      },
     });
 
     await this.activity.log(loan.id, 'loan.installment_paid', null, {
       installmentId: installment.id,
       amount: dto.amount,
-      paymentId: payment.id
+      paymentId: payment.id,
     });
 
     return {
       paymentId: payment.id,
-      receiptUrl: receipt.signedUrl
+      receiptUrl: receipt.signedUrl,
     };
   }
 
@@ -229,14 +247,17 @@ export class LoanService {
       where: { id },
       data: {
         isStopped: true,
-        status: loan.status === LoanStatus.PAID ? LoanStatus.PAID : LoanStatus.REMINDED
-      }
+        status:
+          loan.status === LoanStatus.PAID
+            ? LoanStatus.PAID
+            : LoanStatus.REMINDED,
+      },
     });
 
     await this.activity.log(id, 'loan.stopped', loan, {
       ...loan,
       isStopped: true,
-      stopReason: dto.reason
+      stopReason: dto.reason,
     } as unknown as Record<string, unknown>);
 
     return updated;
@@ -246,7 +267,7 @@ export class LoanService {
     const ctx = this.context.get();
     if (installmentId) {
       const installment = await this.prisma.installment.findFirst({
-        where: { id: installmentId, loanId, orgId: ctx.orgId }
+        where: { id: installmentId, loanId, orgId: ctx.orgId },
       });
       if (!installment) {
         throw new NotFoundException('Installment not found');
@@ -258,9 +279,9 @@ export class LoanService {
       where: {
         loanId,
         orgId: ctx.orgId,
-        status: { in: [InstallmentStatus.PENDING, InstallmentStatus.OVERDUE] }
+        status: { in: [InstallmentStatus.PENDING, InstallmentStatus.OVERDUE] },
       },
-      orderBy: { dueDate: 'asc' }
+      orderBy: { dueDate: 'asc' },
     });
 
     if (!next) {
@@ -289,5 +310,21 @@ export class LoanService {
       installments.push({ dueDate, amount: params.amount });
     }
     return installments;
+  }
+
+  private calculateFirstDueDate(
+    issuedAt: Date,
+    frequency: 'weekly' | 'biweekly' | 'monthly',
+  ) {
+    const firstDue = new Date(issuedAt);
+    firstDue.setHours(0, 0, 0, 0);
+    if (frequency === 'weekly') {
+      firstDue.setDate(firstDue.getDate() + 7);
+    } else if (frequency === 'biweekly') {
+      firstDue.setDate(firstDue.getDate() + 14);
+    } else {
+      firstDue.setMonth(firstDue.getMonth() + 1);
+    }
+    return firstDue;
   }
 }

@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActionStatus } from '../constants/motion';
-import { playErrorTone, playSuccessTone, triggerHapticError, triggerHapticSuccess } from '../lib/feedback';
-
-const PROGRESS_DELAY = 600;
+import { triggerHapticError, triggerHapticSuccess } from '../lib/feedback';
 const FLASH_DURATION = 800;
 const SHAKE_DURATION = 280;
 const AUTO_RESET = 1400;
@@ -35,27 +33,28 @@ const initialVisualState: VisualState = {
   progress: false,
   flash: false,
   shake: false,
-  celebrate: false
+  celebrate: false,
 };
 
 export function useActionFeedback(options: UseActionFeedbackOptions) {
-  const { defaultLabel, successLabel = '¡Listo!', errorLabel = 'Reintentar' } = options;
+  const {
+    defaultLabel,
+    successLabel = '¡Listo!',
+    errorLabel = 'Reintentar',
+  } = options;
   const [status, setStatus] = useState<ActionStatus>('idle');
   const [label, setLabel] = useState(defaultLabel);
   const [message, setMessage] = useState('');
   const [visual, setVisual] = useState<VisualState>(initialVisualState);
 
-  const progressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const shakeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearTimers = useCallback(() => {
-    if (progressTimer.current) clearTimeout(progressTimer.current);
     if (resetTimer.current) clearTimeout(resetTimer.current);
     if (flashTimer.current) clearTimeout(flashTimer.current);
     if (shakeTimer.current) clearTimeout(shakeTimer.current);
-    progressTimer.current = null;
     resetTimer.current = null;
     flashTimer.current = null;
     shakeTimer.current = null;
@@ -86,13 +85,10 @@ export function useActionFeedback(options: UseActionFeedbackOptions) {
         progress: false,
         flash: false,
         shake: false,
-        celebrate: false
+        celebrate: false,
       });
-      progressTimer.current = setTimeout(() => {
-        setVisual((prev) => ({ ...prev, progress: true }));
-      }, PROGRESS_DELAY);
     },
-    [clearTimers]
+    [clearTimers],
   );
 
   const succeed = useCallback(
@@ -112,10 +108,9 @@ export function useActionFeedback(options: UseActionFeedbackOptions) {
         progress: false,
         flash: true,
         shake: false,
-        celebrate: opts.celebrate ?? false
+        celebrate: opts.celebrate ?? false,
       });
       triggerHapticSuccess();
-      playSuccessTone();
 
       flashTimer.current = setTimeout(() => {
         setVisual((prev) => ({ ...prev, flash: false, celebrate: false }));
@@ -127,7 +122,7 @@ export function useActionFeedback(options: UseActionFeedbackOptions) {
         setVisual((prev) => ({ ...prev, check: false, celebrate: false }));
       }, AUTO_RESET);
     },
-    [clearTimers, defaultLabel, successLabel]
+    [clearTimers, defaultLabel, successLabel],
   );
 
   const fail = useCallback(
@@ -143,10 +138,9 @@ export function useActionFeedback(options: UseActionFeedbackOptions) {
         progress: false,
         flash: false,
         shake: true,
-        celebrate: false
+        celebrate: false,
       });
       triggerHapticError();
-      playErrorTone();
 
       shakeTimer.current = setTimeout(() => {
         setVisual((prev) => ({ ...prev, shake: false }));
@@ -158,7 +152,7 @@ export function useActionFeedback(options: UseActionFeedbackOptions) {
         setVisual((prev) => ({ ...prev, error: false }));
       }, AUTO_RESET);
     },
-    [clearTimers, defaultLabel, errorLabel]
+    [clearTimers, defaultLabel, errorLabel],
   );
 
   useEffect(() => () => clearTimers(), [clearTimers]);
@@ -171,6 +165,6 @@ export function useActionFeedback(options: UseActionFeedbackOptions) {
     start,
     success: succeed,
     error: fail,
-    reset
+    reset,
   };
 }

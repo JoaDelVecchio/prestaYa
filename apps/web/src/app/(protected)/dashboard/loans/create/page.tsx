@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createLoan } from '@/lib/api';
 import {
@@ -14,13 +14,13 @@ import {
 } from '@prestaya/ui';
 import { useActionFeedback } from '@/hooks/useActionFeedback';
 
-const toDateInputValue = (date: Date) => date.toISOString().split('T')[0];
+type Frequency = 'weekly' | 'biweekly' | 'monthly';
 
-const defaultFirstDueDate = (() => {
-  const date = new Date();
-  date.setDate(date.getDate() + 7);
-  return toDateInputValue(date);
-})();
+type InstallmentPreview = {
+  sequence: number;
+  amount: number;
+  dueDate: Date;
+};
 
 const initialState = {
   borrowerName: '',
@@ -29,14 +29,88 @@ const initialState = {
   principal: '',
   interestRate: '',
   numberOfInstallments: '',
-  frequency: 'monthly' as const,
-  firstDueDate: defaultFirstDueDate,
+  frequency: 'monthly' as Frequency,
 };
 
 const amountFormatter = new Intl.NumberFormat('es-AR', {
   minimumFractionDigits: 0,
   maximumFractionDigits: 2,
 });
+
+const currencyFormatter = new Intl.NumberFormat('es-AR', {
+  style: 'currency',
+  currency: 'ARS',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const dateFormatter = new Intl.DateTimeFormat('es-AR', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+});
+
+function calculateFirstDueDate(baseDate: Date, frequency: Frequency) {
+  const due = new Date(baseDate);
+  due.setHours(0, 0, 0, 0);
+  if (frequency === 'weekly') {
+    due.setDate(due.getDate() + 7);
+  } else if (frequency === 'biweekly') {
+    due.setDate(due.getDate() + 14);
+  } else {
+    due.setMonth(due.getMonth() + 1);
+  }
+  return due;
+}
+
+function InstallmentPreviewCard({
+  installment,
+}: {
+  installment: InstallmentPreview;
+}) {
+  return (
+    <div className="flex flex-col gap-2 rounded-2xl border border-white/20 bg-white/70 px-4 py-3 shadow-subtle backdrop-blur-md transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-[2px] hover:border-white/35 hover:bg-white/80 hover:shadow-hover">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-xs font-semibold uppercase tracking-[0.12em] text-body-light/70">
+          Cuota {installment.sequence}
+        </span>
+        <span className="text-lg font-semibold text-body-light">
+          {formatCurrency(installment.amount)}
+        </span>
+      </div>
+      <p className="text-xs font-medium text-body-light/60">
+        Vence {formatPreviewDate(installment.dueDate)}
+      </p>
+    </div>
+  );
+}
+
+function advanceByFrequency(
+  baseDate: Date,
+  frequency: Frequency,
+  steps: number,
+) {
+  const next = new Date(baseDate);
+  if (steps === 0) {
+    return next;
+  }
+  if (frequency === 'weekly') {
+    next.setDate(next.getDate() + steps * 7);
+  } else if (frequency === 'biweekly') {
+    next.setDate(next.getDate() + steps * 14);
+  } else {
+    next.setMonth(next.getMonth() + steps);
+  }
+  return next;
+}
+
+function formatCurrency(amount: number) {
+  return currencyFormatter.format(amount);
+}
+
+function formatPreviewDate(date: Date) {
+  return dateFormatter.format(date);
+}
 
 function formatAmountInput(rawValue: string) {
   const normalized = rawValue
@@ -79,6 +153,37 @@ export default function CreateLoanPage() {
     errorLabel: 'Reintentar',
   });
 
+  const schedulePreview = useMemo(() => {
+    const principal = parseAmount(form.principal);
+    const interestRate = Number(form.interestRate.replace(',', '.'));
+    const installments = Number(form.numberOfInstallments);
+
+    const invalidPrincipal = !Number.isFinite(principal) || principal <= 0;
+    const invalidInterest = !Number.isFinite(interestRate) || interestRate <= 0;
+    const invalidInstallments =
+      !Number.isFinite(installments) || installments <= 0;
+
+    if (invalidPrincipal || invalidInterest || invalidInstallments) {
+      return null;
+    }
+
+    const issuedAt = new Date();
+    const firstDueDate = calculateFirstDueDate(issuedAt, form.frequency);
+    const total = principal * (1 + interestRate / 100);
+    const installmentAmount = Number((total / installments).toFixed(2));
+
+    return Array.from({ length: installments }, (_, index) => ({
+      sequence: index + 1,
+      amount: installmentAmount,
+      dueDate: advanceByFrequency(firstDueDate, form.frequency, index),
+    }));
+  }, [
+    form.frequency,
+    form.interestRate,
+    form.numberOfInstallments,
+    form.principal,
+  ]);
+
   const updateField = (field: keyof typeof form, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -106,18 +211,6 @@ export default function CreateLoanPage() {
         return;
       }
 
-      const firstDueDateRaw = form.firstDueDate;
-      if (!firstDueDateRaw) {
-        action.error('Seleccioná la primera fecha de vencimiento');
-        return;
-      }
-
-      const firstDueDate = new Date(firstDueDateRaw);
-      if (Number.isNaN(firstDueDate.getTime())) {
-        action.error('Fecha de primera cuota inválida');
-        return;
-      }
-
       await createLoan({
         borrowerName: form.borrowerName.trim(),
         borrowerPhone: form.borrowerPhone.trim() || undefined,
@@ -126,7 +219,6 @@ export default function CreateLoanPage() {
         interestRate,
         numberOfInstallments: installments,
         frequency: form.frequency,
-        firstDueDate: firstDueDate.toISOString(),
       });
       action.success({
         message: 'Préstamo creado correctamente',
@@ -269,19 +361,33 @@ export default function CreateLoanPage() {
                   <option value="weekly">Semanal</option>
                 </select>
               </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="firstDueDate">Primera cuota</Label>
-                <Input
-                  id="firstDueDate"
-                  type="date"
-                  value={form.firstDueDate}
-                  onChange={(event) =>
-                    updateField('firstDueDate', event.target.value)
-                  }
-                  required
-                />
-              </div>
             </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex flex-col gap-1">
+              <p className="text-xs font-medium uppercase tracking-[0.12em] text-body-light/60">
+                Plan de cuotas estimado
+              </p>
+              <span className="text-xs text-body-light/60">
+                Calculado automáticamente desde hoy según la frecuencia elegida.
+              </span>
+            </div>
+            {schedulePreview ? (
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {schedulePreview.map((installment) => (
+                  <InstallmentPreviewCard
+                    key={installment.sequence}
+                    installment={installment}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-white/40 bg-white/40 px-4 py-6 text-sm text-body-light/60">
+                Completá el monto, el interés y la cantidad de cuotas para ver
+                el cronograma estimado.
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-4">

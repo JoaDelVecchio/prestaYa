@@ -13,7 +13,7 @@ class FakeReceiptService {
     return {
       storagePath: 'receipts/test.pdf',
       signedUrl: 'http://example.com/receipt.pdf',
-      expiresAt: new Date()
+      expiresAt: new Date(),
     };
   }
 }
@@ -27,7 +27,7 @@ describe('LoanService', () => {
     orgId: 'org-123',
     userId: 'user-456',
     role: 'owner' as const,
-    email: 'owner@example.com'
+    email: 'owner@example.com',
   };
 
   beforeEach(async () => {
@@ -37,8 +37,8 @@ describe('LoanService', () => {
         ActivityService,
         RequestContextService,
         { provide: PrismaService, useClass: InMemoryPrismaService },
-        { provide: ReceiptService, useClass: FakeReceiptService }
-      ]
+        { provide: ReceiptService, useClass: FakeReceiptService },
+      ],
     }).compile();
 
     service = moduleRef.get(LoanService);
@@ -53,8 +53,7 @@ describe('LoanService', () => {
     principal: 1000,
     interestRate: 20,
     numberOfInstallments: 4,
-    firstDueDate: new Date().toISOString(),
-    frequency: 'weekly' as const
+    frequency: 'weekly' as const,
   };
 
   it('creates a loan with installments and logs activity', async () => {
@@ -66,9 +65,20 @@ describe('LoanService', () => {
 
     const activities = await prisma.activityLog.findMany({
       where: { loanId: loan.id, orgId: ctx.orgId },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
     expect(activities[0].action).toBe('loan.created');
+  });
+
+  it('sets first installment due date based on creation date and frequency', async () => {
+    const expectedFirstDue = new Date();
+    expectedFirstDue.setHours(0, 0, 0, 0);
+    expectedFirstDue.setDate(expectedFirstDue.getDate() + 7);
+
+    const loan = await context.run(ctx, () => service.create(createLoanDto));
+    const actualFirstDue = loan.installments[0].dueDate;
+
+    expect(actualFirstDue.toISOString()).toBe(expectedFirstDue.toISOString());
   });
 
   it('charges the next pending installment and generates receipt', async () => {
@@ -79,14 +89,14 @@ describe('LoanService', () => {
       service.charge(loan.id, {
         installmentId,
         amount: 300,
-        method: 'cash'
-      })
+        method: 'cash',
+      }),
     );
 
     expect(result.receiptUrl).toContain('http');
 
     const updatedInstallment = await prisma.installment.findFirst({
-      where: { id: installmentId, loanId: loan.id, orgId: ctx.orgId }
+      where: { id: installmentId, loanId: loan.id, orgId: ctx.orgId },
     });
     expect(updatedInstallment?.status).toBe(InstallmentStatus.PAID);
 
@@ -97,13 +107,17 @@ describe('LoanService', () => {
   it('marks loan as stopped and records activity', async () => {
     const loan = await context.run(ctx, () => service.create(createLoanDto));
 
-    const updated = await context.run(ctx, () => service.stop(loan.id, { reason: 'Cliente optó por cierre' }));
+    const updated = await context.run(ctx, () =>
+      service.stop(loan.id, { reason: 'Cliente optó por cierre' }),
+    );
 
     expect(updated.isStopped).toBe(true);
     const activities = await prisma.activityLog.findMany({
-      where: { loanId: loan.id, orgId: ctx.orgId }
+      where: { loanId: loan.id, orgId: ctx.orgId },
     });
-    expect(activities.some((item) => item.action === 'loan.stopped')).toBe(true);
+    expect(activities.some((item) => item.action === 'loan.stopped')).toBe(
+      true,
+    );
   });
 
   it('removes a loan respecting org isolation', async () => {
@@ -112,19 +126,26 @@ describe('LoanService', () => {
     const result = await context.run(ctx, () => service.remove(loan.id));
     expect(result.deleted).toBe(true);
 
-    await expect(context.run(ctx, () => service.findOne(loan.id))).rejects.toThrow('Loan not found');
+    await expect(
+      context.run(ctx, () => service.findOne(loan.id)),
+    ).rejects.toThrow('Loan not found');
   });
 
   it('updates loan fields and logs change', async () => {
     const loan = await context.run(ctx, () => service.create(createLoanDto));
 
     const updated = await context.run(ctx, () =>
-      service.update(loan.id, { borrowerName: 'Maria Gomez', status: LoanStatus.REMINDED })
+      service.update(loan.id, {
+        borrowerName: 'Maria Gomez',
+        status: LoanStatus.REMINDED,
+      }),
     );
 
     expect(updated.borrowerName).toBe('Maria Gomez');
 
-    const activities = await prisma.activityLog.findMany({ where: { loanId: loan.id, action: 'loan.updated' } });
+    const activities = await prisma.activityLog.findMany({
+      where: { loanId: loan.id, action: 'loan.updated' },
+    });
     expect(activities.length).toBeGreaterThan(0);
   });
 
@@ -140,18 +161,20 @@ describe('LoanService', () => {
       service.create({
         ...createLoanDto,
         principal: 100,
-        numberOfInstallments: 1
-      })
+        numberOfInstallments: 1,
+      }),
     );
 
     await context.run(ctx, () =>
       service.charge(singleInstallmentLoan.id, {
         amount: 110,
-        method: 'cash'
-      })
+        method: 'cash',
+      }),
     );
 
-    const refreshed = await context.run(ctx, () => service.findOne(singleInstallmentLoan.id));
+    const refreshed = await context.run(ctx, () =>
+      service.findOne(singleInstallmentLoan.id),
+    );
     expect(refreshed.status).toBe(LoanStatus.PAID);
   });
 
@@ -160,14 +183,18 @@ describe('LoanService', () => {
       service.create({
         ...createLoanDto,
         principal: 200,
-        numberOfInstallments: 1
-      })
+        numberOfInstallments: 1,
+      }),
     );
 
-    await context.run(ctx, () => service.charge(singleInstallmentLoan.id, { amount: 220 }));
-
-    await expect(context.run(ctx, () => service.charge(singleInstallmentLoan.id, { amount: 220 }))).rejects.toThrow(
-      'No pending installments'
+    await context.run(ctx, () =>
+      service.charge(singleInstallmentLoan.id, { amount: 220 }),
     );
+
+    await expect(
+      context.run(ctx, () =>
+        service.charge(singleInstallmentLoan.id, { amount: 220 }),
+      ),
+    ).rejects.toThrow('No pending installments');
   });
 });

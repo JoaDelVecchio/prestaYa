@@ -2,7 +2,7 @@ import { getLoansServer, getCashSummaryServer } from '@/lib/api.server';
 import { Badge, Card, CardContent, CardHeader, CardTitle } from '@prestaya/ui';
 import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 function statusVariant(status: string) {
   switch (status) {
